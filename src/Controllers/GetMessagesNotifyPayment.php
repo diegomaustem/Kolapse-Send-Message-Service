@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Repositories\MessagesRepositoryRDS;
+use App\Services\SendEmails;
 use Config\ConnectionRDS;
 use Predis\Client;
 
@@ -25,56 +26,18 @@ class GetMessagesNotifyPayment
         $queue = 'queue_notify_payment';
 
         $messagesRopositoryRSD = new MessagesRepositoryRDS($this->connection, $queue);
-        $messageList[] = $messagesRopositoryRSD->getMsgOfRDS();
+        $messageList[]= $messagesRopositoryRSD->getMsgOfRDS();
 
         if (!empty($messageList)) {
-
-            // MANDA OS DADOS PARA ENVIO ::: 
-
+            $this->sendEmails($messageList);
             // APÓS ENVIADO EXCLUI A LISTA :::
-
         } 
-
-        var_dump('Inside', $messageList);die();
-
-
-
-        // if ($this->connection->exists('has_message')) {
-        //     var_dump('Dentro');die();
-
-        //     $list[] = $this->connection->lrange($queueList, 0, -1);
-
-        //     $this->envio($list);
-        // } else {
-        //     var_dump('fORA');die();
-        // }
-        
-
     }
 
-
-    private function envio($ar) {
-
-        var_dump('Conteuod:', $ar);die();
-
+    private function sendEmails($messageList)
+    {
+        foreach ($messageList[0] as $message) {
+            $sendEmails = new SendEmails(json_decode($message));
+        }
     }
-
-
-     
-
-
-    // Vai fazer uma requisição ao 
-
-    // Fazer acesso ao redis ::: 
-
-    // Pegar as mensagens da fila :::: 
-
-    // Enviar as mensagens :::: 
-
-    // Apaga-las da fila 
-
-
-
-
-
 }
