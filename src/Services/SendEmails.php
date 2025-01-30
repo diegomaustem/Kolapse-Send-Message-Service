@@ -1,10 +1,12 @@
 <?php
 
 namespace App\Services;
-
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Dotenv\Dotenv;
 
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../../');
+$dotenv->load();
 class SendEmails
 {
     private $message;
@@ -14,49 +16,35 @@ class SendEmails
     {
         $this->message = $message;
         $this->mail = new PHPMailer(true);
-
-        $this->dispache();
     }
 
     public function dispache()
     {
-        $serverSMTP = $this->verifySmtpServer($this->message->email);
-
-        var_dump('Retorno', $serverSMTP);die();
+        $this->emailSettings();
 
         try {
-            $this->mail->isSMTP();
-
+            $this->mail->send();
+            return json_encode(['message' => 'Email sent successfully', 'code' => 250]);
         } catch (Exception $e){
-            return 'Error';
+            return json_encode(['error' => $e->getMessage(), 'code' => 421]);
         }
-
-
-
-
     }
 
-    private function verifySmtpServer($email)
+    private function emailSettings()
     {
-        $serverSmtp = explode('@', $email);
-        $serverSmtp[1];
+        $this->mail->isSMTP();
+        $this->mail->Host = $_ENV['HOST'];
+        $this->mail->SMTPAuth = true;
+        $this->mail->Username = $_ENV['USERNAME'];
+        $this->mail->Password = $_ENV['PASSWORD'];
+        $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; 
+        $this->mail->Port = $_ENV['PORT'];
+            
+        $this->mail->setFrom('kolapse.notify@gmail.com', 'Notify');
+        $this->mail->addAddress($this->message->email, $this->message->name);
 
-        switch ($serverSmtp[1]) {
-            case 'gmail.com':
-                return 'smtp.gmail.com';
-                break;
-            case 'outlook.com':
-                return 'smtp-mail.outlook.com';
-                break;
-            case 'yahoo.com':
-                return 'smtp.mail.yahoo.com';
-                break;
-            case 'mailgun.org':
-                return 'smtp.mailgun.org';
-                break;
-            default:
-                break;
-                return 'Not Found.';
-        }
+        $this->mail->isHTML(true);
+        $this->mail->Subject = 'Payment confirmation Kolapse';
+        $this->mail->Body = "We received your payment";
     }
 }

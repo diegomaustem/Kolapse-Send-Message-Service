@@ -9,6 +9,10 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $app = AppFactory::create();
 
-$msgNotifyPayment = new GetMessagesNotifyPayment();
+$app->get('/', function (Request $request, Response $response) {
+    $msgNotifyPayment = new GetMessagesNotifyPayment();
+
+    return $response->getBody()->write('Service Email - Working');
+});
 
 $app->run();
