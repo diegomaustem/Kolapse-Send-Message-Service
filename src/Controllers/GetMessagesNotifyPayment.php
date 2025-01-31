@@ -1,39 +1,39 @@
 <?php 
+declare(strict_types=1);
 
 namespace App\Controllers;
-
-use App\Repositories\MessagesRepositoryRDS;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use App\Repositories\MessagesRepositoryInterface;
 use App\Services\SendEmails;
-use Config\ConnectionRDS;
-use Exception;
-use Predis\Client;
 
 class GetMessagesNotifyPayment
 {
-    private $connenctionRedis;
-    private $connection;
+    private $messagesRepositoryRDS;
 
-    public function __construct()
+    public function __construct(MessagesRepositoryInterface $messagesRepositoryRDS)
     {
-        $this->connenctionRedis = new ConnectionRDS(new Client());
-  
-        $this->connection = $this->connenctionRedis->getConnectionRDS();
-
+        $this->messagesRepositoryRDS = $messagesRepositoryRDS;
         $this->getMessagesQueueRDS();
     }
 
-    public function getMessagesQueueRDS()
+    public function getMessagesQueueRDS(): string
     {     
         $queue = 'queue_notify_payment';
 
-        $messagesRopositoryRSD = new MessagesRepositoryRDS($this->connection, $queue);
-        $messageList[]= $messagesRopositoryRSD->getMsgOfRDS();
+        $messageList[] = $this->messagesRepositoryRDS->getMsgOfRDS($queue);
 
         if (!empty($messageList)) {
-            $returnEmail = json_decode($this->sendEmails($messageList));
+
+            try {
+                $returnEmail = json_decode($this->sendEmails($messageList));
+            } catch (\Throwable $th) {
+                return $th->getMessage();
+            }
+            
             
             if ($returnEmail->code == 250) {
-                $messagesRopositoryRSD->deleteRDSLists($queue);
+                $this->messagesRepositoryRDS->deleteRDSLists($queue);
             }
             
         } else {

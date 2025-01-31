@@ -1,29 +1,28 @@
 <?php 
+declare(strict_types=1);
 
 namespace App\Repositories;
 
+use Config\ConnectionRDS;
 
-class MessagesRepositoryRDS 
+class MessagesRepositoryRDS implements MessagesRepositoryInterface
 {
     private $connectionRedis;
-    private $storage_queue;
 
-    public function __construct($connection, $storage_queue)
+    public function __construct(ConnectionRDS $connection)
     {
-        $this->connectionRedis = $connection;
-        $this->storage_queue   = $storage_queue;
+        $this->connectionRedis = $connection->getConnectionRDS();
     }
 
-    public function getMsgOfRDS()
-    {
+    public function getMsgOfRDS(string $queue): array {
         try {
-            return $this->connectionRedis->lrange($this->storage_queue, 0, -1);
+            return $this->connectionRedis->lrange($queue, 0, -1);
         } catch (\Throwable $th) {
             return $th;
         }
     }
 
-    public function deleteRDSLists($queue)
+    public function deleteRDSLists(string $queue): string
     {
         try {
             $this->connectionRedis->del($queue);
